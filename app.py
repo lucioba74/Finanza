@@ -9,7 +9,7 @@ st.title("🚀 Dashboard Finanziaria con IA")
 # Recupero Chiave API dai Secrets di Streamlit
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except:
     st.error("Configura la GOOGLE_API_KEY nei Secrets di Streamlit!")
 
