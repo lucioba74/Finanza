@@ -1,30 +1,40 @@
 import streamlit as st
 import yfinance as yf
-import pandas as pd
+import google.generativeai as genai
 
-st.set_page_config(page_title="Dashboard Luciano", layout="wide")
-st.title("📈 Analisi Mercati Luciano")
+# Configurazione Pagina
+st.set_page_config(page_title="Luciano Finance AI", layout="wide")
+st.title("🚀 Dashboard Finanziaria con IA")
 
-# Lista Asset
-assets = {"NVIDIA": "NVDA", "Bitcoin": "BTC-USD", "Oro": "GC=F", "S&P 500": "^GSPC"}
+# Recupero Chiave API dai Secrets di Streamlit
+try:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    model = genai.GenerativeModel('gemini-pro')
+except:
+    st.error("Configura la GOOGLE_API_KEY nei Secrets di Streamlit!")
 
-st.sidebar.header("Impostazioni")
+# Sidebar - Impostazioni
+st.sidebar.header("Analisi Asset")
 periodo = st.sidebar.selectbox("Periodo", ["1mo", "6mo", "1y", "5y"])
+user_question = st.sidebar.text_input("Chiedi all'IA (es: Analizza Nvidia)")
 
+# Visualizzazione Asset
+assets = {"NVIDIA": "NVDA", "Bitcoin": "BTC-USD", "Oro": "GC=F", "S&P 500": "^GSPC"}
 col1, col2 = st.columns(2)
 
 for i, (name, ticker) in enumerate(assets.items()):
-    try:
-        data = yf.Ticker(ticker).history(period=periodo)
+    data = yf.Ticker(ticker).history(period=periodo)
+    target_col = col1 if i % 2 == 0 else col2
+    with target_col:
         if not data.empty:
-            target_col = col1 if i % 2 == 0 else col2
-            with target_col:
-                st.subheader(name)
-                # Calcolo sicuro del prezzo e variazione
-                current_price = data['Close'].iloc[-1]
-                st.metric(name, f"{current_price:.2f}")
-                st.line_chart(data['Close'])
-    except Exception as e:
-        st.error(f"Errore su {name}: Mercato chiuso o dati non pronti.")
+            st.subheader(f"{name}")
+            st.metric("Prezzo", f"{data['Close'].iloc[-1]:.2f}")
+            st.line_chart(data['Close'])
 
-st.caption("Dati Yahoo Finance - Nota: I mercati sono chiusi nel weekend.")
+# Sezione IA
+if user_question:
+    st.write("---")
+    st.subheader("🤖 Responso dell'Intelligenza Artificiale")
+    with st.spinner('L\'IA sta analizzando...'):
+        response = model.generate_content(f"Agisci come esperto finanziario. {user_question}")
+        st.info(response.text)
